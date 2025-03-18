@@ -1,3 +1,7 @@
+# Плюсы
+1. Отличный и очень симпатичный код. Я рад, что ты мой менти. 
+2. Первосходный DAO и его подклассы, замечательная пагинация. 
+3. Очень мало недочётов.
 
 # Минусы 
 1. Есть ненужные библиотеки в класса, которые подчёркнуты серым цветом, например в классе PlayerDao. Чтобы их удалить с помощью hot-key, нажми "ctrl + alt + O" и все ненужные библиотеки удалятся.
@@ -22,6 +26,120 @@
 ```sql
 String hql = "From Player where name = :playerName";
 ```
-Таких моментов в нескольких классах много, так что я не буду более заострять на этом внимание.
+*Таких моменты присутствуют в нескольких классах, так что я не буду более заострять на этом внимание.*
 
-3. 
+3. Не удалил отступ снизу:
+
+```java
+            session.getTransaction().commit();
+            return matches;
+        } catch (HibernateException exception) {
+            throw new DatabaseException("Database error");
+        }
+
+    }
+```
+4. Лучше такие длинные запросы писать через вертикальные отступы:
+
+Было:
+
+```sql
+List<Match> matches = session.createQuery("FROM Match where player1.name ILIKE :name or player2.name ILIKE :name", Match.class)
+```
+Стало: 
+
+```sql
+"FROM Match " +
+"where player1.name ILIKE :name " +
+"or player2.name ILIKE :name", Match.class)
+```
+
+5. Слишком длинная строка, снова вертикальные отступы нужны:
+
+```sql
+Optional<Player> player = session.createQuery(hql, Player.class).setParameter("playerName", playerName).uniqueResultOptional();
+```
+
+6. Снова перестарался:
+
+```java
+@Builder
+public record MatchDto(Long id, Player player1, Player player2, Player winner, MatchScore matchScore){
+
+}
+```
+Снова отступы. Давай дальше без меня обдумай это. Не стану повторяться, ибо получится ревью только из отступов))
+
+7. Лучше назвать PlayerType. Понимаю твою мотивацию, мол, enum и всё такое, но это выглядит не очень:
+
+```java
+public enum EPlayer {
+```
+
+8. Мог сделать final, но не сделал:
+
+```java
+    private int indexPlayer;
+```
+Зачем это нужно? Затем, чтобы указать другому разработчику, что это константа. 
+
+9. Ты добавил lombok, но не пользуешься им. 
+
+Было: 
+
+```java
+public enum EPlayer {
+    PLAYER1(0),
+    PLAYER2(1);
+
+    private final int indexPlayer;
+
+    EPlayer(int indexPlayer) {
+        this.indexPlayer = indexPlayer;
+    }
+
+    public int getIndexPlayer() {
+        return indexPlayer;
+    }
+}
+```
+
+Стало:
+
+```java
+@Getter
+public enum EPlayer {
+    PLAYER1(0),
+    PLAYER2(1);
+
+    private final int indexPlayer;
+
+    EPlayer(int indexPlayer) {
+        this.indexPlayer = indexPlayer;
+    }
+}
+```
+
+10. Не забывай о форматирование, нажми: ctrl + K + D и всё само собой отформатируется:
+
+```java
+public class DatabaseException extends RuntimeException{
+```
+
+11. Лучше назвать CharacterEncodingFilter. Таким образом станет яснее мотивация данного класса:
+
+```java
+@WebFilter("/*")
+public class BaseFilter implements Filter {
+
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        servletResponse.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        filterChain.doFilter(servletRequest,servletResponse);
+    }
+}
+```
+
+И кстати снова форматирование. Но с этим давай дальше сам.
+
+12. 
