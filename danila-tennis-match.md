@@ -285,5 +285,108 @@ getScorePlayer1() != Points.FORTY
 ```java
 score[INDEX_PLAYER1] = score[INDEX_PLAYER1].next();
 ```
+Вынеси в отдельный метод.
 
+18. Тут очевидный дубляж кода. Вынеси в отдельный метод:
 
+```java
+        if (player == EPlayer.PLAYER1) {
+            if (getScorePlayer1() != Points.FORTY) {
+                score[INDEX_PLAYER1] = score[INDEX_PLAYER1].next();
+            } else if (!isTie) {
+                winner = FIRST_PLAYER;
+            }
+        }
+
+        if (player == EPlayer.PLAYER2) {
+            if (getScorePlayer2() != Points.FORTY) {
+                score[INDEX_PLAYER2] = score[INDEX_PLAYER2].next();
+            } else if (!isTie) {
+                winner = SECOND_PLAYER;
+            }
+        }
+```
+
+19. Забыл снова отступы:
+
+```java
+    @ManyToOne
+    @JoinColumn(name = "player1")
+    private Player player1;
+    @ManyToOne
+    @JoinColumn(name = "player2")
+    private Player player2;
+    @ManyToOne
+    @JoinColumn(name = "winner")
+    private Player winner;
+```
+
+20. Я не понимаю, что такое "-1", вынеси в константу:
+
+```java
+    public List<MatchDto> getFinishedMatches(int pageNumber, String playerName, int pageSize) {
+
+        int offset = (pageNumber - 1) * pageSize;
+        
+        if (playerName == null) {
+            return matchDao.findAllPaginated(offset, pageSize)
+                    .stream()
+                    .map(matchDtoMapper::mapFromMatchToDto).toList();
+        }
+        
+        return matchDao.findByPlayerNamePaginated(offset, pageSize, playerName).
+                stream().
+                map(matchDtoMapper::mapFromMatchToDto).toList();
+    }
+```
+
+21. Снова дубляж, ещё и форматирования нет:
+
+```java
+        if (optPlayer1.isEmpty()) {
+            player1 = Player.builder().name(playerOne).build();
+            playerDao.save(player1);
+        } else {
+            player1 = optPlayer1.get();
+        }
+
+        if (optPlayer2.isEmpty()) {
+            player2 = Player.builder().name(playerTwo).build();
+            playerDao.save(player2);
+        }else {
+            player2 = optPlayer2.get();
+        }
+```
+
+22. Не бойся писать полные название, я понимаю, что сам API java EE так делает, но почему мы должны следовать их правилам? Если что, я о req и resp
+
+```java
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+```
+
+23. Удаляй не используемые throws исключения:
+
+```java
+    @Override
+    public void init(ServletConfig config) throws ServletException {
+        this.finishedMatchesService = (FinishedMatchesService) config.getServletContext().getAttribute("finishedMatchesService");
+    }
+```
+
+24. Всё это помести в DTO. Представь что тебе 1000 атрибутов надо ставить, то что, каждый раз так будешь делать?
+
+```java
+     req.setAttribute("matches", finishedMatches);
+        req.setAttribute("pageNumber", pageNumber);
+        req.setAttribute("filterName", playerName);
+        req.setAttribute("pageSize", PAGE_SIZE_BY_DEFAULT);
+```
+Плюс, из - за этого метод большой. Я бы хотя бы вынес это в метод.
+25. Снова забыл о констанах в классе FinishedMatchesServlet.
+
+26. Выноси в константы магические значения:
+```java
+        if (!playerOne.matches("[а-яА-яёЁa-zA-Z ]+") || !playerTwo.matches("[а-яА-ЯёЁa-zA-Z ]+")) {
+```
+
+27. 
