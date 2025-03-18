@@ -212,7 +212,85 @@ points[playerIndex]++;
 
 Нужно обработать это в try-catch-finally.
 
+Класс FinishedMatchesServlet:
+
+1. Слишком много добавления атрибутов в request. Можно всё это свести к очень короткому варианту. Ибо зачем устанавливать все поля по одному? Можно указать один объект и все.
+
+Речь об этом:
+
+```java
+        req.setAttribute("finishedMatches", finishedMatches);
+        req.setAttribute("currentPageNumber", currentPageNumber);
+        req.setAttribute("filterByPlayerName", filterByPlayerName);
+        req.setAttribute("totalPages", totalPages);
+        req.setAttribute("pageSize", PAGE_SIZE);
+```
+
+
 Класс BaseServlet:
 
 1. Стоит его переименовать в ExceptionHandlerServlet.
-2. 
+
+Класс IndexServlet:
+
+1. Вынеси index.jsp в константу
+
+```java
+        req.getRequestDispatcher("index.jsp").forward(req, resp);
+```
+2. Не бойся использовать полные имена, по типу request и response. Знаю, что создатели Java EE сами такой API написали, но лучше так не делать.
+
+Класс NewMatchServlet:
+
+1. Тут есть комментарии. Раз в проду решил опубликовать, то убери их.
+
+```java
+        Map<String, String> exceptions = new HashMap<>(); // Изменяем тип ключа на String
+```
+
+2. Слишком много параметров. Стоит ограничиться 3-мя:
+
+```java
+        postNewMatch(req, resp, playerOne, exceptions, playerTwo);
+```
+
+3. Вынеси строки в константы:
+
+```java
+        if (!Validation.validPlayerName(playerOne)) {
+            exceptions.put("playerOne", "First player name is not valid.");
+        }
+```
+
+4. Слишком длинные операции в if. Хорошо ограничиться одним методом на один блок. Таким образом вынеси всё в методы. Также тут есть System.out.println(), что плохо, у тебя есть логи, пользуйся ими.
+
+```java
+        if (exceptions.isEmpty()) {
+            Match match = matchService.createNewMatch(playerOne, playerTwo);
+            UUID uuidOfMatch = ongoingMatchesService.add(match);
+            resp.sendRedirect("/match-score?uuid=" + uuidOfMatch.toString());
+        } else {
+            req.setAttribute("exceptions", exceptions);
+            System.out.println("Exceptions map: " + exceptions);
+            req.getRequestDispatcher("new-match.jsp").forward(req, resp);
+        }
+```
+
+Класс CalculationUtil:
+
+1. Всё норм, только магические значения. Убирай их.
+
+Класс Validation:
+
+1. Очень трудно читать это условие. Разбей на 2 метода для каждого из них.
+
+```java
+    public boolean validPlayerName(String name) {
+        return !name.isBlank() && name.chars()
+                .allMatch(c -> Character.isLetter(c) || c == '_' || c == '-' || c == ' ')
+               && name.length() <= 20;
+    }
+```
+
+---
+На этом всё.
