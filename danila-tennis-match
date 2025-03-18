@@ -236,6 +236,54 @@ class ApplicationService {
     private OngoingMatchesService ongoingMatchesService;
 }
 ```
-13.
+13. Не понимаю что значат эти вопросы. Удали их и не сбивай с толку других:
+
+```java
+    public MatchDto mapFromPlayersToDto(Player player1, Player player2) {
+        return MatchDto.builder()
+                .player1(player1)
+                .player2(player2)
+                .matchScore(new MatchScore()) //???
+                .build();
+    }
+```
+
+14. GameScore
+Снова зачем - то ты закомментировал и опубликовал в продакшен код, с непонятными для других комментариями:
+
+```java
+//        if (isAdvantagePlayer1) {
+//            winner = FIRST_PLAYER;
+//        }
+//
+//        if (isAdvantagePlayer2) {
+//            winner = SECOND_PLAYER;
+//        }
+```
+
+15. GameScore
+Магические значения по типу "7" надо вынести в константы:
+
+```java
+        if ((player1TieBreakPoints >= 7 || player2TieBreakPoints >= 7)
+            && Math.abs(player1TieBreakPoints - player2TieBreakPoints) >= 2) {
+            winner = player.toString();
+        }
+```
+
+16. Дублирующиеся условия:
+
+```java
+getScorePlayer2() != Points.FORTY
+getScorePlayer1() != Points.FORTY
+```
+
+Вынеси в отдельный метод.
+
+17. Не понимаю что это значит:
+
+```java
+score[INDEX_PLAYER1] = score[INDEX_PLAYER1].next();
+```
 
 
