@@ -1,1 +1,27 @@
 
+# Минусы 
+1. Есть ненужные библиотеки в класса, которые подчёркнуты серым цветом, например в классе PlayerDao. Чтобы их удалить с помощью hot-key, нажми "ctrl + alt + O" и все ненужные библиотеки удалятся.
+2. Обсудим этот метод
+
+```java
+    @Override
+    public Optional<Player> findByName(String playerName) {
+        String hql = "From Player where name = :playerName";
+        try (Session session = sessionFactory.getCurrentSession()) {
+            session.beginTransaction();
+            Optional<Player> player = session.createQuery(hql, Player.class).setParameter("playerName", playerName).uniqueResultOptional();
+            session.getTransaction().commit();
+            return player;
+        } catch (HibernateException exception) {
+            throw new DatabaseException("Database error");
+        }
+    }
+```
+2.1. В нём нет отступов перед try. Перед всеми и после блочных сущностей, по типу: for, for-each, try, if, while, do-while, надо ставить отступы.
+2.2. Нужно вынести запрос hql в константу. Это позволит переиспользовать данный запрос. Речь об этом:
+```sql
+String hql = "From Player where name = :playerName";
+```
+Таких моментов в нескольких классах много, так что я не буду более заострять на этом внимание.
+
+3. 
