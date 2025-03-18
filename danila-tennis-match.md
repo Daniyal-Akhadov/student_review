@@ -2,6 +2,7 @@
 1. Отличный и очень симпатичный код. Я рад, что ты мой менти. 
 2. Первосходный DAO и его подклассы, замечательная пагинация. 
 3. Очень мало недочётов.
+4. С архитектурой всё отлично.
 
 # Минусы 
 1. Есть ненужные библиотеки в класса, которые подчёркнуты серым цветом, например в классе PlayerDao. Чтобы их удалить с помощью hot-key, нажми "ctrl + alt + O" и все ненужные библиотеки удалятся.
@@ -389,4 +390,80 @@ score[INDEX_PLAYER1] = score[INDEX_PLAYER1].next();
         if (!playerOne.matches("[а-яА-яёЁa-zA-Z ]+") || !playerTwo.matches("[а-яА-ЯёЁa-zA-Z ]+")) {
 ```
 
-27. 
+27. Щас будет долгое объяснение. Посмотрим на этот метод
+
+```java
+
+    public static void initDatabase() {
+        try (InputStream resource = HibernateUtil.class.getClassLoader().getResourceAsStream("data.sql")) {
+            byte[] bytes = Objects.requireNonNull(resource).readAllBytes();
+            String sql = new String(bytes);
+            Session session = sessionFactory.getCurrentSession();
+            session.beginTransaction();
+            session.createNativeQuery(sql).executeUpdate();
+            session.getTransaction().commit();
+        } catch (HibernateException exception) {
+            throw new DatabaseException("Database error");
+        } catch (IOException exception) {
+            throw new ResourceNotFoundException("sql data is not found");
+        }
+    }
+```
+
+Что тут плохого?
+Нет rollback. Нет логов. Слишком здоровый метод. Нет загрузчика ресурсов, хотя стоило бы вынести в отдельную ответственность, ты сразу инициализируешь значения, хотя стоило бы использовать DI, дабы подменять значения, ибо создание объектов это не обязанность данного класса, а ты это делаешь.
+
+Как сделать?
+
+```java
+public class DatabaseInitializer {
+
+    private final SessionFactory sessionFactory;
+    private final ResourceLoader resourceLoader;
+
+    public DatabaseInitializer(SessionFactory sessionFactory, ResourceLoader resourceLoader) {
+        this.sessionFactory = sessionFactory;
+        this.resourceLoader = resourceLoader;
+    }
+
+    public void initDatabase() {
+        String sql = loadSqlData("data.sql");
+        executeSql(sql);
+    }
+
+    private String loadSqlData(String resourceName) {
+        try (InputStream resource = resourceLoader.getResourceAsStream(resourceName)) {
+            byte[] bytes = Objects.requireNonNull(resource).readAllBytes();
+            return new String(bytes);
+        } catch (IOException exception) {
+            throw new ResourceNotFoundException("SQL data is not found", exception);
+        }
+    }
+
+    private void executeSql(String sql) {
+        Session session = sessionFactory.getCurrentSession();
+        try {
+            session.beginTransaction();
+            session.createNativeQuery(sql).executeUpdate();
+            session.getTransaction().commit();
+        } catch (HibernateException exception) {
+            session.getTransaction().rollback();
+            throw new DatabaseException("Database error", exception);
+        }
+    }
+}
+
+public interface ResourceLoader {
+    InputStream getResourceAsStream(String resourceName) throws IOException;
+}
+
+public class ClasspathResourceLoader implements ResourceLoader {
+    @Override
+    public InputStream getResourceAsStream(String resourceName) {
+        return getClass().getClassLoader().getResourceAsStream(resourceName);
+    }
+}
+
+```
+
+На этом всё.
