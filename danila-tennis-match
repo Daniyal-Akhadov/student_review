@@ -142,4 +142,100 @@ public class BaseFilter implements Filter {
 
 И кстати снова форматирование. Но с этим давай дальше сам.
 
-12. 
+12. Слишком много добавления атрибутов в контекст. Можно всё это свести к очень короткому варианту. 
+Ибо зачем устанавливать все поля по одному? Можно указать один объект и все.
+
+Как было:
+
+```java
+@WebListener
+public class ApplicationServletContextListener implements ServletContextListener {
+    public void contextInitialized(ServletContextEvent event) {
+        HibernateUtil.initDatabase();
+        ServletContext servletContext = event.getServletContext();
+
+        MatchDao matchDao = new MatchDao();
+        PlayerDao playerDao = new PlayerDao();
+        servletContext.setAttribute("matchDao", matchDao);
+        servletContext.setAttribute("playerDao", playerDao);
+        MatchDtoMapper matchDtoMapper = new MatchDtoMapper();
+        servletContext.setAttribute("matchDtoMapper", matchDtoMapper);
+
+        servletContext.setAttribute("newMatchService", new NewMatchService(playerDao, matchDtoMapper));
+        servletContext.setAttribute("matchScoreCalculationService", new MatchScoreCalculationService());
+        servletContext.setAttribute("finishedMatchesService", new FinishedMatchesService(matchDao, matchDtoMapper));
+        servletContext.setAttribute("ongoingMatchesService", new OngoingMatchesService());
+    }
+}
+```
+
+Как стало:
+
+```java
+@Getter
+public class ApplicationServletContextListener {
+    private final MatchDao matchDao;
+    private final PlayerDao playerDao;
+    private final MatchDtoMapper matchDtoMapper;
+    private final NewMatchService newMatchService;
+    private final MatchScoreCalculationService matchScoreCalculationService;
+    private final FinishedMatchesService finishedMatchesService;
+    private final OngoingMatchesService ongoingMatchesService;
+
+    public ApplicationServletContextListener() {
+        this.matchDao = new MatchDao();
+        this.playerDao = new PlayerDao();
+        this.matchDtoMapper = new MatchDtoMapper();
+        this.newMatchService = new NewMatchService(playerDao, matchDtoMapper);
+        this.matchScoreCalculationService = new MatchScoreCalculationService();
+        this.finishedMatchesService = new FinishedMatchesService(matchDao, matchDtoMapper);
+        this.ongoingMatchesService = new OngoingMatchesService();
+    }
+}
+```
+Это один объект который имеет все поля, что дальше?
+
+```java
+@WebListener
+class ApplicationServletContextListener implements ServletContextListener {
+
+    @Override
+    public void contextInitialized(ServletContextEvent event) {
+        HibernateUtil.initDatabase();
+        ApplicationServices applicationServices = new ApplicationServices();
+        event.getServletContext().setAttribute("applicationServices", applicationServices);
+    }
+}
+```
+
+Можно сделать ещё лучше. Без конструктора в ApplicationServices. С помощью @Inject возможно создать объекты полей и соответственно выполнить инъекцию.
+
+```java
+@ApplicationScoped
+@Getter
+class ApplicationService {
+    @Inject
+    private MatchDao matchDao;
+
+    @Inject
+    private PlayerDao playerDao;
+
+    @Inject
+    private MatchDtoMapper matchDtoMapper;
+
+    @Inject
+    private NewMatchService newMatchService;
+
+    @Inject
+    private MatchScoreCalculationService matchScoreCalculationService;
+
+    @Inject
+    private FinishedMatchesService finishedMatchesService;
+
+    @Inject
+    private OngoingMatchesService ongoingMatchesService;
+}
+```
+13.
+
+
