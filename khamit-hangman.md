@@ -1,3 +1,7 @@
+Проект: https://github.com/youlovehamit/Hangman
+
+[khamit]
+
 # Плюсы
 
 1. Игра запускается
