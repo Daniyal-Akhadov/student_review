@@ -1,3 +1,7 @@
+Проект: https://github.com/EGladki/Simulation/tree/master
+
+[EGladki]
+
 # Плюсы
 
 1. Игра работает!
