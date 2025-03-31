@@ -1,3 +1,7 @@
+Проект: https://github.com/sergei-ostrovskiii/visilica
+
+[sergei ostravskiii]
+
 # Привет!
 
 ## Плюсы
