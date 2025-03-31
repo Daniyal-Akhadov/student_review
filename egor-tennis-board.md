@@ -1,3 +1,7 @@
+Проект: https://github.com/eternallyu/tennis_scoreboard
+
+[Egor]
+
 # Плюсы
 
 1. Всё приложение работает отлично. Включая критически ситуации по типу tie-brake.
